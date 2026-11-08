@@ -1,1 +1,4 @@
-# case2_KHMT2411016_LuuNhatHuy
+# Thông Tin Cá Nhân
+
+- **MSSV:** KHMT2411016
+- **Họ và tên:** Lưu Nhật Huy
