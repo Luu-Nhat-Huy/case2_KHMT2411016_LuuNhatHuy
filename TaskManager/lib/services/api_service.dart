@@ -136,17 +136,55 @@ class ApiService {
     _decode(response);
   }
 
-  static Future<List<Map<String, dynamic>>> getTasks() async {
-    final response = await http.get(Uri.parse('$baseUrl/api/tasks'), headers: await _headers(auth: true))
+  static Future<List<Map<String, dynamic>>> getTasks({
+    String search = '',
+    String status = 'all',
+    String priority = 'all',
+    String sortBy = 'createdAt',
+    String order = 'desc',
+    String view = 'all',
+    String assignee = 'all',
+  }) async {
+    final uri = Uri.parse('$baseUrl/api/tasks').replace(queryParameters: {
+      if (search.trim().isNotEmpty) 'search': search.trim(),
+      if (status != 'all') 'status': status,
+      if (priority != 'all') 'priority': priority,
+      if (assignee != 'all') 'assignee': assignee,
+      'sortBy': sortBy,
+      'order': order,
+      'view': view,
+    });
+    final response = await http.get(uri, headers: await _headers(auth: true))
         .timeout(const Duration(seconds: 20));
     final data = _decode(response);
     dynamic list = data;
-    if (data is Map) {
-      list = data['tasks'] ?? data['data'] ?? data['results'] ?? [];
-      if (list is Map) list = list['tasks'] ?? list['data'] ?? [];
-    }
+    if (data is Map) list = data['tasks'] ?? data['data'] ?? data['results'] ?? [];
     if (list is! List) throw ApiException('Backend trả về danh sách công việc không hợp lệ');
     return list.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
+  static Future<List<Map<String, dynamic>>> getTaskUsers({String search = ''}) async {
+    final uri = Uri.parse('$baseUrl/api/tasks/users').replace(
+      queryParameters: search.trim().isEmpty ? null : {'search': search.trim()},
+    );
+    final response = await http.get(uri, headers: await _headers(auth: true))
+        .timeout(const Duration(seconds: 20));
+    final data = _decode(response);
+    final users = data is Map ? data['users'] : null;
+    if (users is! List) throw ApiException('Backend trả về danh sách người dùng không hợp lệ');
+    return users.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
+  static Future<Map<String, dynamic>> getTaskById(String id) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/tasks/$id'),
+      headers: await _headers(auth: true),
+    ).timeout(const Duration(seconds: 20));
+    final data = _decode(response);
+    if (data is! Map) throw ApiException('Dữ liệu chi tiết công việc không hợp lệ');
+    final task = data['task'] ?? data['data'] ?? data;
+    if (task is! Map) throw ApiException('Không tìm thấy dữ liệu công việc');
+    return Map<String, dynamic>.from(task);
   }
 
   static Future<Map<String, dynamic>> createTask(Map<String, dynamic> task) async {
