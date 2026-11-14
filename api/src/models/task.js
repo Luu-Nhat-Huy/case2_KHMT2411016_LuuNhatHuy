@@ -17,7 +17,10 @@ const taskSchema = new mongoose.Schema(
     startDate: { type: Date, default: null },
     dueDate: { type: Date, default: null },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    // assignedTo giu tuong thich du lieu cu; primaryAssignee la nguoi phu trach chinh.
     assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    assignedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    primaryAssignee: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
     sharedWith: { type: [sharedUserSchema], default: [] },
   },
   { timestamps: true },
@@ -25,6 +28,7 @@ const taskSchema = new mongoose.Schema(
 
 taskSchema.index({ createdBy: 1, createdAt: -1 });
 taskSchema.index({ assignedTo: 1, dueDate: 1 });
+taskSchema.index({ assignedUsers: 1 });
 taskSchema.index({ "sharedWith.user": 1 });
 
 module.exports = mongoose.model("Task", taskSchema);
